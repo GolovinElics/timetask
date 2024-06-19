@@ -21,6 +21,14 @@ import time
 import gc
 from channel import channel_factory
 
+import emoji
+
+def replace_emojis_with_unicode(text):
+    return emoji.demojize(text)
+
+def replace_unicode_with_emojis(text):
+    return emoji.emojize(text, use_aliases=True)
+
 class TimeTaskRemindType(Enum):
     NO_Task = 1           #无任务
     Add_Success = 2       #添加任务成功
@@ -77,7 +85,8 @@ class timetask(Plugin):
 
     #处理时间任务
     def deal_timeTask(self, content, e_context: EventContext):
-        
+        content = replace_emojis_with_unicode(content)
+
         if content.startswith("取消任务"):
             self.cancel_timeTask(content, e_context)
             
@@ -89,6 +98,7 @@ class timetask(Plugin):
         
     #取消任务
     def cancel_timeTask(self, content, e_context: EventContext):
+        content = replace_unicode_with_emojis(content)
         #分割
         wordsArray = content.split(" ")
         #任务编号
@@ -121,7 +131,8 @@ class timetask(Plugin):
         
     #获取任务列表
     def get_timeTaskList(self, content, e_context: EventContext):
-        
+        content = replace_unicode_with_emojis(content)
+
         #任务列表
         taskArray = ExcelTool().readExcel()
         tempArray = []
@@ -164,6 +175,7 @@ class timetask(Plugin):
           
     #添加任务
     def add_timeTask(self, content, e_context: EventContext):
+        content = replace_emojis_with_unicode(content)
         #失败时，默认提示
         defaultErrorMsg = "⏰定时任务指令格式异常😭，请核查！" + self.get_default_remind(TimeTaskRemindType.Add_Failed)
         
@@ -199,18 +211,20 @@ class timetask(Plugin):
             if not taskModel.isValid_Cron_time():
                self.replay_use_default(defaultErrorMsg, e_context)
                return
-           
+
         #私人为群聊任务
         if taskModel.isPerson_makeGrop():
             newEvent, groupTitle = taskModel.get_Persion_makeGropTitle_eventStr()
-            if len(groupTitle) <= 0 or len(newEvent) <= 0 :
-               self.replay_use_default(defaultErrorMsg, e_context)
-               return
+            groupTitle = replace_emojis_with_unicode(groupTitle)
+            # 查找群组ID
+            if len(groupTitle) <= 0 or len(newEvent) <= 0:
+                self.replay_use_default(defaultErrorMsg, e_context)
+                return
             else:
                 channel_name = RobotConfig.conf().get("channel_type", "wx")
-                groupId = taskModel.get_gropID_withGroupTitle(groupTitle , channel_name)
+                groupId = taskModel.get_gropID_withGroupTitle(groupTitle, channel_name)
                 if len(groupId) <= 0:
-                    defaultErrorMsg = f"⏰定时任务指令格式异常😭，未找到群名为【{groupTitle}】的群聊，请核查！" + self.get_default_remind(TimeTaskRemindType.Add_Failed)
+                    defaultErrorMsg = f"⏰定时任务指令格式异常😭，未找到群名为【{replace_unicode_with_emojis(groupTitle)}】的群聊，请核查！" + self.get_default_remind(TimeTaskRemindType.Add_Failed)
                     self.replay_use_default(defaultErrorMsg, e_context)
                     return
         

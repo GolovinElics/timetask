@@ -17,6 +17,16 @@ from lib.itchat.content import *
 from channel.chat_message import ChatMessage
 from croniter import croniter
 import threading
+
+import emoji
+
+# 定义转换函数
+def replace_emojis_with_unicode(text):
+    return emoji.demojize(text)
+
+def replace_unicode_with_emojis(text):
+    return emoji.emojize(text)
+
 try:
     from channel.wechatnt.ntchat_channel import wechatnt
 except Exception as e:
@@ -855,33 +865,35 @@ class TimeTaskModel:
         substring_groupTitle = targetStr[index + 6:]
         substring_groupTitle = substring_groupTitle.replace("]", "").strip()
         return substring_event, substring_groupTitle
-    
+
     #通过 群Title 获取群ID
     def get_gropID_withGroupTitle(self, groupTitle, channel_name):
         if len(groupTitle) <= 0:
-              return ""
+            return ""
         #itchat
         if channel_name == "wx":
             tempRoomId = ""
-            #群聊处理       
+            #群聊处理
             try:
-                #群聊  
+                #群聊
                 chatrooms = itchat.get_chatrooms()
                 #获取群聊
                 for chatroom in chatrooms:
                     #id
                     userName = chatroom["UserName"]
                     NickName = chatroom["NickName"]
-                    if NickName == groupTitle:
+                    NickNameUnicode = replace_emojis_with_unicode(NickName)  # 转换为 Unicode 描述符
+                    print(f"群聊名: {NickName}, 转换后的群聊名 Unicode: {NickNameUnicode}")  # 打印群聊名及转换结果
+                    if NickNameUnicode == groupTitle:
                         tempRoomId = userName
                         break
-                    
+                print(f"最终匹配的群组ID: {tempRoomId}")  # 打印最终匹配的群组ID
                 return tempRoomId
             except Exception as e:
                 print(f"[{channel_name}通道] 通过 群Title 获取群ID发生错误，错误信息为：{e}")
                 return tempRoomId
-            
-            
+
+
         elif channel_name == "ntchat":
             tempRoomId = ""
             try:
@@ -892,10 +904,12 @@ class TimeTaskModel:
                     for item in rooms:
                         roomId = item.get("wxid")
                         nickname = item.get("nickname")
-                        if nickname == groupTitle:
+                        NickNameUnicode = replace_emojis_with_unicode(nickname)  # 转换为 Unicode 描述符
+                        print(f"群聊名: {nickname}, 转换后的群聊名 Unicode: {NickNameUnicode}")  # 打印群聊名及转换结果
+                        if NickNameUnicode == groupTitle:
                             tempRoomId = roomId
                             break
-                        
+                print(f"最终匹配的群组ID: {tempRoomId}")  # 打印最终匹配的群组ID
                 return tempRoomId
                         
             except Exception as e:
@@ -912,10 +926,12 @@ class TimeTaskModel:
                     for item in rooms:
                         roomId = item.get("conversation_id")
                         nickname = item.get("nickname")
-                        if nickname == groupTitle:
+                        NickNameUnicode = replace_emojis_with_unicode(nickname)  # 转换为 Unicode 描述符
+                        print(f"群聊名: {nickname}, 转换后的群聊名 Unicode: {NickNameUnicode}")  # 打印群聊名及转换结果
+                        if NickNameUnicode == groupTitle:
                             tempRoomId = roomId
                             break
-
+                print(f"最终匹配的群组ID: {tempRoomId}")  # 打印最终匹配的群组ID
                 return tempRoomId
 
             except Exception as e:
